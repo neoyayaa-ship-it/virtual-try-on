@@ -44,7 +44,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      histories: histories.map(h => ({
+      histories: histories.map((h: any) => ({
         id: h.id,
         clothingImageUrl: h.clothingImageUrl,
         personImageUrl: h.personImageUrl,
