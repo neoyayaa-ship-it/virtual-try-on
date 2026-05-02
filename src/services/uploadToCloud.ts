@@ -17,7 +17,7 @@ function validateEnvVars(): boolean {
   ];
 
   console.log('[uploadToCloud] 环境变量检查:');
-  required.forEach(({ name, value }) => {
+  required.forEach(({ name, value }: { name: string; value: string }) => {
     console.log(`  ${name}: ${value ? '✓ 已配置' : '✗ 未配置'}`);
   });
 
@@ -106,7 +106,7 @@ async function downloadImage(imageUrl: string): Promise<Buffer> {
     
     console.log(`[uploadToCloud] 图片下载成功，大小: ${(buffer.length / 1024).toFixed(2)} KB`);
     return buffer;
-  } catch (error) {
+  } catch (error: any) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('下载图片超时（30秒）');
@@ -136,7 +136,7 @@ async function uploadToR2(buffer: Buffer, fileName: string, contentType: string)
 
     console.log(`[uploadToCloud] 上传成功: ${uniqueFileName}`);
     return uniqueFileName;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[uploadToCloud] 上传到 R2 失败:', error);
     if (error instanceof Error) {
       console.error('[uploadToCloud] 错误名称:', error.name);
@@ -178,7 +178,7 @@ export async function uploadToCloud(imageUrl: string, fileName: string): Promise
     console.log(`[uploadToCloud] 处理完成: ${publicUrl}`);
 
     return publicUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[uploadToCloud] 处理失败:', error);
     throw error;
   }

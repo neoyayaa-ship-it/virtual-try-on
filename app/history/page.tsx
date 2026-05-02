@@ -47,7 +47,7 @@ export default function HistoryPage() {
       } else {
         setError(response.data.error || '获取历史记录失败');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[History] 获取历史记录失败:', err);
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {

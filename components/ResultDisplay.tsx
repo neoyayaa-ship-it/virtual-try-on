@@ -20,7 +20,7 @@ export default function ResultDisplay({ imageUrl, onRegenerate }: ResultDisplayP
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('下载失败:', error);
     }
   };

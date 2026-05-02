@@ -94,7 +94,7 @@ export const tryOnService: TryOnService = {
         console.error('[TryOnService] API 返回数据格式异常');
         return { success: false, error: '生成结果格式异常' };
       }
-    } catch (error) {
+    } catch (error: any) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
         

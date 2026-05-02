@@ -59,7 +59,7 @@ export default function Home() {
         setError(response.data.error || '生成失败');
         setStatus('error');
       }
-    } catch (err) {
+    } catch (err: any) {
       if (axios.isAxiosError(err)) {
         if (err.code === 'ECONNABORTED') {
           setError('请求超时，请稍后重试');

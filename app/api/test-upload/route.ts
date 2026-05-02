@@ -3,7 +3,7 @@ import { uploadToCloud } from '@/src/services/uploadToCloud';
 
 export async function POST(request: Request) {
   try {
-    const { imageUrl, fileName } = await request.json();
+    const { imageUrl, fileName }: { imageUrl?: string; fileName?: string } = await request.json();
 
     if (!imageUrl) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       originalUrl: imageUrl,
       permanentUrl: resultUrl,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[test-upload] 测试失败:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : '未知错误' },

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     console.log('[save-history] 历史记录保存成功:', history.id);
     
     return NextResponse.json({ success: true, historyId: history.id });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[save-history] 保存失败:', error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }

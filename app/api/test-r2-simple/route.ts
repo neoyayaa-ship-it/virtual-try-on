@@ -42,7 +42,7 @@ export async function GET() {
       message: 'R2 上传成功！',
       publicUrl: publicUrl,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[test-r2-simple] 测试失败:', error);
     return NextResponse.json({
       success: false,

@@ -31,9 +31,9 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'R2 连接成功！',
-      buckets: response.Buckets?.map(b => b.Name) || [],
+      buckets: response.Buckets?.map((b: any) => b.Name) || [],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[test-r2] 测试失败:', error);
     return NextResponse.json({
       success: false,

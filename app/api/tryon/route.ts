@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       
       console.log('=== 5. 启动后台处理（R2 + 数据库） ===');
       // 在后台异步上传到 R2 + 保存数据库（不阻塞响应）
-      processInBackground(body, result.imageUrl, clerkUserId).catch(error => {
+      processInBackground(body, result.imageUrl, clerkUserId).catch((error: any) => {
         console.error('[API/tryon] 后台处理失败:', error);
       });
       
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         error: result.error,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API/tryon] 服务器内部错误:', error);
     return NextResponse.json(
       { success: false, error: '服务器内部错误' },
