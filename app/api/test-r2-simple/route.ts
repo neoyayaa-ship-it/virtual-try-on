@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     console.log('[test-r2-simple] 开始测试 R2 上传...');

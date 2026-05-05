@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { uploadToCloud } from '@/src/services/uploadToCloud';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { imageUrl, fileName }: { imageUrl?: string; fileName?: string } = await request.json();

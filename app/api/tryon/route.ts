@@ -4,6 +4,8 @@ import type { Category, FitType } from '@/types';
 import { uploadToCloud } from '@/src/services/uploadToCloud';
 import { auth } from '@clerk/nextjs/server';
 
+export const dynamic = 'force-dynamic';
+
 interface TryOnRequestBody {
   personImage: string;
   clothingImage: string;
