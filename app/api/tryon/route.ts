@@ -9,6 +9,31 @@ interface TryOnRequestBody {
   clothingImage: string;
   category: Category;
   fit?: FitType;
+  turnstileToken: string;
+}
+
+async function verifyTurnstile(token: string): Promise<boolean> {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  if (!secretKey) {
+    console.error('[API/tryon] TURNSTILE_SECRET_KEY 未配置');
+    return false;
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
+    });
+
+    const result = await response.json();
+    return result.success === true;
+  } catch (error) {
+    console.error('[API/tryon] Turnstile 验证失败:', error);
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
@@ -20,7 +45,23 @@ export async function POST(request: Request) {
     const { userId: clerkUserId } = auth();
     console.log('[API/tryon] Clerk User ID:', clerkUserId);
     
-    // 参数校验
+    if (!body.turnstileToken) {
+      console.warn('[API/tryon] 缺少 Turnstile token');
+      return NextResponse.json(
+        { success: false, error: '请完成人机验证' },
+        { status: 400 }
+      );
+    }
+
+    const isValidTurnstile = await verifyTurnstile(body.turnstileToken);
+    if (!isValidTurnstile) {
+      console.warn('[API/tryon] Turnstile 验证失败');
+      return NextResponse.json(
+        { success: false, error: '人机验证失败，请重试' },
+        { status: 400 }
+      );
+    }
+    
     if (!body.personImage || !body.clothingImage || !body.category) {
       console.warn('[API/tryon] 参数缺失');
       return NextResponse.json(
