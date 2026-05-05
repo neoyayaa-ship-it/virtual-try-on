@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RotateCcw, Sparkles } from 'lucide-react';
 
 interface ResultDisplayProps {
   imageUrl: string;
@@ -15,44 +15,53 @@ export default function ResultDisplay({ imageUrl, onRegenerate }: ResultDisplayP
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tryon-${Date.now()}.png`;
+      a.download = `fitai-tryon-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      console.error('下载失败:', error);
+      console.error('Download failed:', error);
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-[#1a1a1a]">生成结果</h3>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-full bg-[#22c55e] flex items-center justify-center">
+            <Sparkles className="w-3 h-3 text-white" />
+          </div>
+          <span className="text-sm font-semibold text-[#1a1a1a]">Your try-on is ready</span>
+        </div>
+        <div className="flex items-center gap-1">
           <button
             onClick={handleDownload}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#6b6b6b] hover:text-[#1a1a1a] hover:bg-[#f7f7f5] rounded-lg transition-colors"
           >
-            <Download className="w-4 h-4" strokeWidth={1.5} />
-            下载
+            <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Save
           </button>
           <button
             onClick={onRegenerate}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#6b6b6b] hover:text-[#1a1a1a] hover:bg-[#f7f7f5] rounded-lg transition-colors"
           >
-            <RefreshCw className="w-4 h-4" strokeWidth={1.5} />
-            重新生成
+            <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Try again
           </button>
         </div>
       </div>
-      <div className="rounded-xl overflow-hidden border border-[#e5e5e5]">
-        <img
-          src={imageUrl}
-          alt="换装结果"
-          className="w-full h-auto"
-        />
+
+      {/* image */}
+      <div className="rounded-2xl overflow-hidden border border-[#e5e5e5] shadow-sm">
+        <img src={imageUrl} alt="Try-on result" className="w-full h-auto" />
       </div>
+
+      {/* disclaimer */}
+      <p className="text-xs text-center text-[#b4b4b4]">
+        For reference only — actual fit may vary.
+      </p>
     </div>
   );
 }

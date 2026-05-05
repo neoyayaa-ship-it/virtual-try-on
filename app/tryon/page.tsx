@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
-import Link from 'next/link';
+import { useUser, SignInButton } from '@clerk/nextjs';
 import axios from 'axios';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { ArrowRight, Sparkles, LogIn } from 'lucide-react';
 import ImageUploader from '@/components/ImageUploader';
 import CategorySelector from '@/components/CategorySelector';
 import FitSelector from '@/components/FitSelector';
@@ -18,7 +18,21 @@ type Status = 'idle' | 'generating' | 'success' | 'error';
 
 const TIMEOUT_DURATION = 30000;
 
-export default function Home() {
+function SectionDivider({ step, title }: { step: string; title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <span className="text-[10px] font-bold tracking-[0.15em] text-[#9a9a9a] uppercase whitespace-nowrap">
+        {step}
+      </span>
+      <div className="flex-1 h-px bg-[#e5e5e5]" />
+      <span className="text-[10px] font-medium tracking-wide text-[#b4b4b4] uppercase whitespace-nowrap">
+        {title}
+      </span>
+    </div>
+  );
+}
+
+export default function TryOnPage() {
   const { isSignedIn } = useUser();
   const [personImage, setPersonImage] = useState<UploadedImage | null>(null);
   const [clothingImage, setClothingImage] = useState<UploadedImage | null>(null);
@@ -38,12 +52,11 @@ export default function Home() {
 
   const handleSubmit = useCallback(async () => {
     if (!personImage || !clothingImage) {
-      setError('请先上传两张图片');
+      setError('Please upload both photos first');
       return;
     }
-
     if (!turnstileToken) {
-      setError('请先完成人机验证');
+      setError('Please complete the verification check');
       return;
     }
 
@@ -52,146 +65,193 @@ export default function Home() {
 
     try {
       const response = await axios.post('/api/tryon', {
-        personImage: personImage!.base64,
-        clothingImage: clothingImage!.base64,
+        personImage: personImage.base64,
+        clothingImage: clothingImage.base64,
         category,
         fit,
         turnstileToken,
-      }, {
-        timeout: TIMEOUT_DURATION,
-      });
+      }, { timeout: TIMEOUT_DURATION });
 
       if (response.data.success && response.data.resultImage) {
         setResultImage(response.data.resultImage);
         setStatus('success');
       } else {
-        setError(response.data.error || '生成失败');
+        setError(response.data.error || 'Generation failed. Please try again.');
         setStatus('error');
       }
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNABORTED') {
-          setError('请求超时，请稍后重试');
-        } else {
-          setError(err.response?.data?.error || '网络请求失败');
-        }
+        setError(
+          err.code === 'ECONNABORTED'
+            ? 'Request timed out. Please try again.'
+            : err.response?.data?.error || 'Network error. Please try again.'
+        );
       } else {
-        setError('未知错误');
+        setError('Something went wrong. Please try again.');
       }
       setStatus('error');
     }
-  }, [personImage, clothingImage, category, fit, turnstileToken, isSignedIn]);
+  }, [personImage, clothingImage, category, fit, turnstileToken]);
 
   const handleTimeout = useCallback(() => {
-    setError('请求超时，请稍后重试');
+    setError('Request timed out. Please try again.');
     setStatus('error');
   }, []);
 
   const canGenerate = personImage && clothingImage && status !== 'generating';
+  const isGenerating = status === 'generating';
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
+
+      {/* Guest notice */}
       {!isSignedIn && (
-        <div className="bg-[#fff9e6] border-b border-[#f0e6c0]">
-          <div className="max-w-5xl mx-auto px-6 py-3">
-            <p className="text-sm text-[#8a7533] text-center">
-              你正在以游客身份体验，
-              <Link href="/sign-in" className="text-[#1a1a1a] underline hover:no-underline">
-                登录后可保存记录
-              </Link>
-            </p>
+        <div className="border-b border-[#e5e5e5] bg-[#f7f7f5]">
+          <div className="max-w-2xl mx-auto px-6 py-3 flex items-center justify-center gap-3">
+            <span className="text-[13px] text-[#6b6b6b]">
+              Guest mode — results won&apos;t be saved to your history
+            </span>
+            <SignInButton mode="modal">
+              <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#1a1a1a] hover:opacity-70 transition-opacity">
+                <LogIn className="w-3.5 h-3.5" />
+                Sign in
+              </button>
+            </SignInButton>
           </div>
         </div>
       )}
+
       {error && <ErrorToast message={error} onClose={() => setError('')} />}
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="text-center mb-8">
-          <p className="text-sm text-[#6b6b6b]">上传照片和服装图，AI 生成试穿效果</p>
+      <div className="max-w-2xl mx-auto px-6 py-14">
+
+        {/* Page header */}
+        <div className="mb-12">
+          <div className="inline-flex items-center gap-2 bg-[#f7f7f5] border border-[#e5e5e5] rounded-full px-3.5 py-1.5 mb-5">
+            <Sparkles className="w-3.5 h-3.5 text-[#6b6b6b]" />
+            <span className="text-[11px] font-bold tracking-widest text-[#6b6b6b] uppercase">
+              AI-Powered
+            </span>
+          </div>
+          <h1 className="text-[32px] font-bold text-[#1a1a1a] tracking-tight leading-tight mb-3">
+            Virtual Try-On
+          </h1>
+          <p className="text-[15px] text-[#6b6b6b] leading-relaxed max-w-sm">
+            Upload a photo of yourself and any clothing item. Our AI generates
+            a photorealistic try-on in seconds.
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#1a1a1a]">人物照片</label>
+        {/* ── Step 01: Upload photos ── */}
+        <section className="mb-10">
+          <SectionDivider step="Step 01" title="Upload Photos" />
+          <div className="grid grid-cols-2 gap-5">
             <ImageUploader
-              hint="上传清晰的人物照片"
+              label="Person Photo"
+              hint="Upload your photo"
               value={personImage}
               onChange={setPersonImage}
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#1a1a1a]">服装图片</label>
             <ImageUploader
-              hint="上传商品图或服装照片"
+              label="Clothing Image"
+              hint="Upload clothing"
               value={clothingImage}
               onChange={setClothingImage}
             />
           </div>
-        </div>
+          <p className="mt-3 text-xs text-[#b4b4b4] text-center">
+            A clear, well-lit front-facing photo gives the best results
+          </p>
+        </section>
 
-        <div className="bg-[#f7f7f5] rounded-2xl p-6 mb-8">
-          <div className="space-y-6">
+        {/* ── Step 02: Options ── */}
+        <section className="mb-10">
+          <SectionDivider step="Step 02" title="Options" />
+          <div className="bg-[#f7f7f5] border border-[#e5e5e5] rounded-2xl p-6 space-y-6">
             <CategorySelector
               value={category}
               onChange={setCategory}
-              disabled={status === 'generating'}
+              disabled={isGenerating}
             />
-
+            <div className="h-px bg-[#e5e5e5]" />
             <FitSelector
               value={fit}
               onChange={setFit}
-              disabled={status === 'generating'}
+              disabled={isGenerating}
             />
           </div>
-        </div>
+        </section>
 
-        <div className="mb-6 flex justify-center">
-          <Turnstile
-            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-            onSuccess={setTurnstileToken}
-            options={{
-              theme: 'light',
-            }}
-          />
-        </div>
+        {/* ── Step 03: Generate ── */}
+        <section>
+          <SectionDivider step="Step 03" title="Generate" />
 
-        <button
-          onClick={handleSubmit}
-          disabled={!canGenerate}
-          className={`
-            w-full py-4 rounded-xl font-medium text-sm transition-all duration-200
-            ${status === 'generating'
-              ? 'bg-[#f7f7f5] text-[#6b6b6b] cursor-not-allowed'
-              : canGenerate
-                ? 'bg-[#1a1a1a] text-white hover:bg-[#333333]'
-                : 'bg-[#e5e5e5] text-[#9a9a9a] cursor-not-allowed'
-            }
-          `}
-        >
-          {status === 'generating' ? '生成中...' : '生成换装效果'}
-        </button>
-
-        {status === 'generating' && (
-          <div className="mt-4">
-            <div className="h-1 bg-[#e5e5e5] rounded-full overflow-hidden">
-              <div className="h-full bg-[#1a1a1a] rounded-full animate-progress" />
-            </div>
-            <LoadingSpinner timeout={TIMEOUT_DURATION} onTimeout={handleTimeout} />
+          <div className="mb-6 flex justify-center">
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+              onSuccess={setTurnstileToken}
+              options={{ theme: 'light' }}
+            />
           </div>
-        )}
 
+          <button
+            onClick={handleSubmit}
+            disabled={!canGenerate}
+            className={`
+              w-full py-5 rounded-2xl font-semibold text-[15px]
+              flex items-center justify-center gap-2.5
+              transition-all duration-200
+              ${isGenerating
+                ? 'bg-[#f0f0ee] text-[#9a9a9a] cursor-not-allowed'
+                : canGenerate
+                  ? 'bg-[#1a1a1a] text-white hover:bg-[#2d2d2d] shadow-sm hover:shadow-md active:scale-[0.99]'
+                  : 'bg-[#e5e5e5] text-[#b4b4b4] cursor-not-allowed'
+              }
+            `}
+          >
+            {isGenerating ? (
+              <>
+                <span className="w-4 h-4 border-2 border-[#c4c4c4] border-t-[#6b6b6b] rounded-full animate-spin" />
+                Generating your look…
+              </>
+            ) : (
+              <>
+                Generate Try-On
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          {!canGenerate && !isGenerating && (
+            <p className="mt-3 text-xs text-[#b4b4b4] text-center">
+              {!personImage && !clothingImage
+                ? 'Upload both photos to continue'
+                : !personImage
+                  ? 'Upload your photo to continue'
+                  : 'Upload a clothing image to continue'}
+            </p>
+          )}
+
+          {isGenerating && (
+            <div className="mt-5 space-y-2">
+              <div className="h-0.5 bg-[#e5e5e5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#1a1a1a] rounded-full animate-progress" />
+              </div>
+              <LoadingSpinner timeout={TIMEOUT_DURATION} onTimeout={handleTimeout} />
+            </div>
+          )}
+        </section>
+
+        {/* Result */}
         {status === 'success' && resultImage && (
-          <div className="mt-8 animate-fade-in">
+          <div className="mt-12 pt-12 border-t border-[#e5e5e5] animate-fade-in">
             <ResultDisplay imageUrl={resultImage} onRegenerate={resetState} />
           </div>
         )}
 
-        <footer className="mt-16 pt-8 border-t border-[#e5e5e5] text-center">
-          <p className="text-xs text-[#9a9a9a]">
-            仅供娱乐参考，实际效果以实物为准
-          </p>
+        <footer className="mt-20 pt-8 border-t border-[#e5e5e5] text-center">
+          <p className="text-xs text-[#c4c4c4]">For reference only — actual fit may vary</p>
         </footer>
       </div>
     </div>
