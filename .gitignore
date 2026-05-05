@@ -4,6 +4,7 @@ node_modules/.prisma
 
 # Build outputs
 .next/
+tsconfig.tsbuildinfo
 
 # Environment variables
 .env

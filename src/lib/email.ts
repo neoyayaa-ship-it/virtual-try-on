@@ -1,11 +1,10 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function sendWelcomeEmail(
   userEmail: string,
   userName: string
 ) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   await resend.emails.send({
     from: '虚拟试衣 <onboarding@resend.dev>',
     to: userEmail,
