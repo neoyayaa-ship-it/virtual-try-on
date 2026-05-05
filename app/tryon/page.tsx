@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useUser, SignInButton } from '@clerk/nextjs';
 import axios from 'axios';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { ArrowRight, Sparkles, LogIn } from 'lucide-react';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
+import { ArrowRight, Sparkles, LogIn, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import ImageUploader from '@/components/ImageUploader';
 import CategorySelector from '@/components/CategorySelector';
 import FitSelector from '@/components/FitSelector';
@@ -15,6 +16,7 @@ import Header from '@/components/Header';
 import type { Category, FitType, UploadedImage } from '@/types';
 
 type Status = 'idle' | 'generating' | 'success' | 'error';
+type VerifyStatus = 'verifying' | 'success' | 'error' | 'expired';
 
 const TIMEOUT_DURATION = 30000;
 
@@ -42,12 +44,16 @@ export default function TryOnPage() {
   const [resultImage, setResultImage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('verifying');
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const resetState = useCallback(() => {
     setStatus('idle');
     setResultImage('');
     setError('');
     setTurnstileToken('');
+    setVerifyStatus('verifying');
+    turnstileRef.current?.reset();
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -98,7 +104,8 @@ export default function TryOnPage() {
     setStatus('error');
   }, []);
 
-  const canGenerate = personImage && clothingImage && status !== 'generating';
+  const isVerified = verifyStatus === 'success' && !!turnstileToken;
+  const canGenerate = personImage && clothingImage && isVerified && status !== 'generating';
   const isGenerating = status === 'generating';
 
   return (
@@ -187,12 +194,79 @@ export default function TryOnPage() {
         <section>
           <SectionDivider step="Step 03" title="Generate" />
 
-          <div className="mb-6 flex justify-center">
+          {/* Turnstile verification */}
+          <div className="mb-6">
+            {/* The widget itself — invisible mode renders 0×0, managed mode renders a checkbox */}
             <Turnstile
+              ref={turnstileRef}
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-              onSuccess={setTurnstileToken}
-              options={{ theme: 'light' }}
+              onSuccess={(token) => {
+                setTurnstileToken(token);
+                setVerifyStatus('success');
+              }}
+              onError={() => {
+                setTurnstileToken('');
+                setVerifyStatus('error');
+              }}
+              onExpire={() => {
+                setTurnstileToken('');
+                setVerifyStatus('expired');
+              }}
+              options={{ theme: 'light', execution: 'render' }}
             />
+
+            {/* Status pill — always visible so user knows what's happening */}
+            <div className={`
+              flex items-center justify-between px-4 py-3 rounded-xl border
+              transition-colors duration-300
+              ${verifyStatus === 'success'
+                ? 'bg-[#f0fdf4] border-[#bbf7d0]'
+                : verifyStatus === 'error' || verifyStatus === 'expired'
+                  ? 'bg-[#fef2f2] border-[#fecaca]'
+                  : 'bg-[#f7f7f5] border-[#e5e5e5]'
+              }
+            `}>
+              <div className="flex items-center gap-2.5">
+                {verifyStatus === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-[#22c55e] flex-shrink-0" />
+                ) : verifyStatus === 'error' || verifyStatus === 'expired' ? (
+                  <AlertCircle className="w-4 h-4 text-[#ef4444] flex-shrink-0" />
+                ) : (
+                  <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                    <span className="w-3 h-3 border-2 border-[#c4c4c4] border-t-[#6b6b6b] rounded-full animate-spin" />
+                  </span>
+                )}
+                <span className={`text-sm font-medium ${
+                  verifyStatus === 'success'
+                    ? 'text-[#16a34a]'
+                    : verifyStatus === 'error' || verifyStatus === 'expired'
+                      ? 'text-[#dc2626]'
+                      : 'text-[#6b6b6b]'
+                }`}>
+                  {verifyStatus === 'success'
+                    ? 'Verification passed'
+                    : verifyStatus === 'error'
+                      ? 'Verification failed'
+                      : verifyStatus === 'expired'
+                        ? 'Verification expired'
+                        : 'Verifying you\'re human…'}
+                </span>
+              </div>
+
+              {(verifyStatus === 'error' || verifyStatus === 'expired') && (
+                <button
+                  onClick={() => {
+                    setVerifyStatus('verifying');
+                    setTurnstileToken('');
+                    turnstileRef.current?.reset();
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Retry
+                </button>
+              )}
+            </div>
           </div>
 
           <button
@@ -229,7 +303,11 @@ export default function TryOnPage() {
                 ? 'Upload both photos to continue'
                 : !personImage
                   ? 'Upload your photo to continue'
-                  : 'Upload a clothing image to continue'}
+                  : !clothingImage
+                    ? 'Upload a clothing image to continue'
+                    : !isVerified
+                      ? 'Waiting for verification to complete…'
+                      : ''}
             </p>
           )}
 
