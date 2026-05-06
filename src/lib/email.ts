@@ -5,7 +5,7 @@ export async function sendWelcomeEmail(userEmail: string, userName: string) {
   const displayName = userName && userName !== '用户' ? userName : 'there'
 
   await resend.emails.send({
-    from: 'FitAI <onboarding@resend.dev>',
+    from: 'FitAI <hello@fittryon.site>',
     to: userEmail,
     subject: 'Welcome to FitAI',
     html: `
