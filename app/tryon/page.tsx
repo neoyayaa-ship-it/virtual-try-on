@@ -96,6 +96,10 @@ export default function TryOnPage() {
         setError('Something went wrong. Please try again.');
       }
       setStatus('error');
+    } finally {
+      setTurnstileToken('');
+      setVerifyStatus('verifying');
+      turnstileRef.current?.reset();
     }
   }, [personImage, clothingImage, category, fit, turnstileToken]);
 
