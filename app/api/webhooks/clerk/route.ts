@@ -45,8 +45,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    await sendWelcomeEmail(userEmail, userName)
-    console.log('[Webhook] Welcome email sent:', userEmail)
+    const result = await sendWelcomeEmail(userEmail, userName)
+    console.log('[Webhook] sendWelcomeEmail result:', JSON.stringify(result))
+    if (result.error) {
+      console.error('[Webhook] Email error detail:', JSON.stringify(result.error))
+    } else if (result.data) {
+      console.log('[Webhook] Welcome email sent:', userEmail)
+    }
   } catch (emailError) {
     console.error('[Webhook] Failed to send welcome email:', emailError)
   }
