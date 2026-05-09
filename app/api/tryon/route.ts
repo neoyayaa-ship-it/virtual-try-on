@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   
   try {
     const body: TryOnRequestBody = await request.json();
-    const { userId: clerkUserId } = auth();
+    const { userId: clerkUserId } = await auth();
     console.log('[API/tryon] Clerk User ID:', clerkUserId);
     
     if (!body.turnstileToken) {

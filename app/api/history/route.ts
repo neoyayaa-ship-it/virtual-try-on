@@ -7,7 +7,7 @@ export async function GET() {
   console.log('[API/history] 收到获取历史记录请求');
 
   try {
-    const { userId: clerkUserId } = auth();
+    const { userId: clerkUserId } = await auth();
     console.log('[API/history] Clerk User ID:', clerkUserId);
 
     if (!clerkUserId) {

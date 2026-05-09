@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     console.log('[save-history] 收到保存历史请求');
     
-    const { userId: clerkUserId } = auth();
+    const { userId: clerkUserId } = await auth();
     console.log('[save-history] Clerk User ID:', clerkUserId);
     
     if (!clerkUserId) {
