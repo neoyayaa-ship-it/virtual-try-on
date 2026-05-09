@@ -5,7 +5,6 @@ const isPublicRoute = createRouteMatcher([
   '/tryon(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/api/webhooks/clerk',
 ]);
 
 export default clerkMiddleware((auth, req) => {
@@ -14,8 +13,10 @@ export default clerkMiddleware((auth, req) => {
 });
 
 export const config = {
+  // Webhook paths never enter this middleware — Clerk's handshake logic
+  // runs even on early-return public routes and can emit a 307.
   matcher: [
-    '/((?!_next|.*\\..*).*)',
-    '/(api|trpc)(.*)',
+    '/((?!_next|api/webhooks|.*\\..*).*)',
+    '/(api(?!/webhooks)|trpc)(.*)',
   ],
 };
