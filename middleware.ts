@@ -6,6 +6,8 @@ export default authMiddleware({
     '/tryon',
     '/sign-in(.*)',
     '/sign-up(.*)',
+  ],
+  ignoredRoutes: [
     '/api/webhooks/clerk',
   ],
 });
